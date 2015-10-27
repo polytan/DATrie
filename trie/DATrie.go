@@ -133,9 +133,9 @@ func (this *DATrie) reOrg() {
 	}
 	
 	refs := []*reference{}
-	_trie.WideVisit(func(n *_T) {
+	_trie.WideVisit(func(n *_T) bool {
 		if n.isLeaf() {
-			return
+			return true	//continue
 		}
 		
 		var min, max byte
@@ -154,6 +154,8 @@ func (this *DATrie) reOrg() {
 		}
 		
 		refs = append(refs, newReference(length, min, max, n))
+		
+		return true
 	})
 	
 	//sort the 
@@ -172,9 +174,9 @@ func (this *DATrie) reOrg() {
 	
 	//set other node bc
 	_trie.root.payload.(*reference).base = DATRIE_HEAD_LOC	//tell children about base location
-	_trie.WideVisit(func(n *_T) {
+	_trie.WideVisit(func(n *_T) bool {
 		if n.isLeaf() {
-			return
+			return true	//true means continue
 		}
 		
 		ploc := n.payload.(*reference).base	//value is the parent location
@@ -196,6 +198,8 @@ func (this *DATrie) reOrg() {
 				this.array.setCheck(idx, ploc)
 			}
 		}
+		
+		return true
 	})
 	
 	this.arrayItems = len(this.list)

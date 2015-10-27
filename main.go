@@ -11,15 +11,29 @@ import (
 )
 
 func main() {
-	bc1 := loadTrie("sample.txt")
-	if bc1 == nil {
-		panic("Error while createing trie")
+//	bc1 := loadTrie("sample.txt")
+//	if bc1 == nil {
+//		panic("Error while createing trie")
+//	}
+	
+//	bc2 := loadDATrie("sample.txt")
+//	if bc2 == nil {
+//		panic("Error while creating DATrie")
+//	}
+	
+	bc3 := loadACTrie("sample.txt")
+	if bc3 == nil {
+		panic("Error while creating ACTrie")
 	}
 	
-	bc2 := loadDATrie("sample.txt")
-	if bc2 == nil {
-		panic("Error whilc creating DATrie")
-	}
+	list := bc3.SearchTrie("aabaacaadaaeaaf")
+	
+	fmt.Println(list)
+}
+
+func testSearch(t *trie.ACTrie, str string) {
+	r := t.Search(str)
+	fmt.Println("Search word ", str, ", result: ", r)
 }
 
 func readFile(file string) []string {
@@ -113,6 +127,23 @@ func loadDATrie(file string) *trie.DATrie {
 	}
 	end = time.Now()
 	fmt.Println("Validate trie: ", end.Sub(start))
+	
+	return t
+}
+
+func loadACTrie(file string) *trie.ACTrie {
+	var start, end time.Time
+	
+	arr := readFile(file)
+	
+	start = time.Now()
+	t := trie.NewACTrie()
+	t.BuildTrie(arr)
+	end = time.Now()
+	fmt.Println("Build ACTrie: ", end.Sub(start))
+	fmt.Println("Words in trie: ", t.Len())
+	
+	//check trie
 	
 	return t
 }

@@ -6,6 +6,8 @@ type _T struct {
 	number		int		//the node number
 	chains		int		//how many chains after this node
 	terminal	bool	//whether this node is a word
+	word		byte	//the value
+	prefix		int16	//length from start to here
 	payload		interface{}		//the payload
 	childrens	map[byte]*_T	//children nodes
 }
@@ -15,11 +17,13 @@ type Trie struct {
 	sequence	int
 }
 
-func newT(seq int) *_T {
+func newT(seq int, w byte) *_T {
 	return &_T{
 		number: seq,
 		chains: 0,
 		terminal: false,
+		word: w,
+		prefix: 0,
 		payload: nil,
 		childrens: map[byte]*_T{},
 	}
@@ -27,15 +31,16 @@ func newT(seq int) *_T {
 
 func NewTrie() *Trie {
 	return &Trie{
-		root: newT(0),
+		root: newT(0, 0),
 		sequence: 0,
 	}
 }
 
-type visitor func(*_T)
+type visitor func(*_T) bool
+type walker func(*_T) *_T
 
 func (t *_T) debug() {
-	fmt.Printf("node[%d], chains:%d, isword:%v, childrens: %d\n", t.number, t.chains, t.terminal, len(t.childrens))
+	fmt.Printf("node[%d], chains:%d, isword:%v, char:%d, prefix:%d childrens: %d\n", t.number, t.chains, t.terminal, t.word, t.prefix, len(t.childrens))
 }
 
 func (t *_T) isLeaf() bool {
@@ -55,28 +60,52 @@ func (this *Trie) next() int {
 	return this.sequence
 }
 
-func deepVisit(n *_T, v visitor) {
-	v(n)
+func deepVisit(n *_T, v visitor) bool {
+	if !v(n) {
+		return false
+	}
+	
 	if n.isLeaf() {
-		return
+		return true
 	}
 	
 	for _, c := range n.childrens {
-		deepVisit(c, v)
+		if !deepVisit(c, v) {
+			return false
+		}
 	}
+	
+	return true
 }
 
-func (this *Trie) DeepVisit(v visitor) {
-	deepVisit(this.root, v)
+func (this *Trie) DeepVisit(v visitor) bool {
+	return deepVisit(this.root, v)
 }
 
-func (this *Trie) WideVisit(v visitor) {
+func (this *Trie) WideVisit(v visitor) bool {
 	for queue := []*_T{this.root}; len(queue) > 0; queue = queue[1:] {
 		n := queue[0]
-		v(n)
+		
+		if !v(n) {
+			return false
+		}
+		
 		for _, c := range n.childrens {
 			queue = append(queue, c)
 		}
+	}
+	
+	return true
+}
+
+func (this *Trie) Walk(w walker) {
+	curr := this.root
+	
+	for {
+		if curr == nil {
+			break
+		}
+		curr = w(curr)
 	}
 }
 
@@ -94,7 +123,8 @@ func (this *Trie) Add(str string) bool {
 	for _, b := range []byte(str) {
 		n, ok := curr.childrens[b]
 		if !ok {
-			n = newT(this.next())
+			n = newT(this.next(), b)
+			n.prefix = curr.prefix + 1
 			curr.childrens[b] = n
 		}
 		
@@ -136,6 +166,20 @@ func (this *Trie) Search(str string) bool {
 		curr = n
 	}
 	return curr.terminal
+}
+
+func (this *Trie) searchNode(str string) *_T {
+	curr := this.root
+	for _, b := range []byte(str) {
+		n, ok := curr.childrens[b]
+		if !ok {
+			return nil
+		}
+		
+		curr = n
+	}
+
+	return curr
 }
 
 func (this *Trie) SearchDebug(str string) bool {
