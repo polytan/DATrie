@@ -41,6 +41,7 @@ type DATrie struct {
 	reorgSize	int
 	expBCSize	int
 	arrayItems	int
+	states		int
 	array		*bcArray
 	addTrie		*Trie
 	list		[]string
@@ -55,6 +56,7 @@ func NewDATrie(reorgSize, expBCSize int) *DATrie {
 		reorgSize: reorgSize,
 		expBCSize: expBCSize,
 		arrayItems: 0,
+		states: 0,
 		array: newBCArray(expBCSize, DATRIE_START_LOC),
 		addTrie: NewTrie(),
 		list: []string{},
@@ -63,6 +65,7 @@ func NewDATrie(reorgSize, expBCSize int) *DATrie {
 
 func (this *DATrie) reset() {
 	this.arrayItems = 0
+	this.states = 0
 	this.array = newBCArray(this.expBCSize, DATRIE_START_LOC)
 	this.addTrie = NewTrie()
 }
@@ -167,10 +170,11 @@ func (this *DATrie) reOrg() {
 	}
 	
 	//now update base and check
-
+	
 	//set root node bc
 	this.array.setBase(DATRIE_HEAD_LOC, _trie.root.payload.(*reference).base)
 	this.array.setCheck(DATRIE_HEAD_LOC, -DATRIE_HEAD_LOC)
+	this.array.setPayload(DATRIE_HEAD_LOC, _trie.root.number)
 	
 	//set other node bc
 	_trie.root.payload.(*reference).base = DATRIE_HEAD_LOC	//tell children about base location
@@ -197,12 +201,15 @@ func (this *DATrie) reOrg() {
 			} else {
 				this.array.setCheck(idx, ploc)
 			}
+			
+			this.array.setPayload(idx, v.number)
 		}
 		
 		return true
 	})
 	
 	this.arrayItems = len(this.list)
+	this.states = _trie.sequence
 	return
 }
 

@@ -11,24 +11,34 @@ import (
 )
 
 func main() {
-//	bc1 := loadTrie("sample.txt")
+	input := "out.txt"
+	search := "中华人民共和国"
+//	search := "aabaacaadaaeaaf"
+//	bc1 := loadTrie(input)
 //	if bc1 == nil {
 //		panic("Error while createing trie")
 //	}
 	
-//	bc2 := loadDATrie("sample.txt")
+//	bc2 := loadDATrie(input)
 //	if bc2 == nil {
 //		panic("Error while creating DATrie")
 //	}
 	
-	bc3 := loadACTrie("sample.txt")
+	bc3 := loadACTrie(input)
 	if bc3 == nil {
 		panic("Error while creating ACTrie")
 	}
 	
-	list := bc3.SearchTrie("aabaacaadaaeaaf")
+	list3 := bc3.SearchTrie(search)
+	fmt.Println(list3)
 	
-	fmt.Println(list)
+	bc4 := loadACDATrie(input)
+	if bc4 == nil {
+		panic("Error while creating ACDATrie")
+	}
+	
+	list4 := bc4.SearchTrie(search)
+	fmt.Println(list4)
 }
 
 func testSearch(t *trie.ACTrie, str string) {
@@ -146,4 +156,22 @@ func loadACTrie(file string) *trie.ACTrie {
 	//check trie
 	
 	return t
+}
+
+func loadACDATrie(file string) *trie.ACDATrie {
+	var start, end time.Time
+	
+	arr := readFile(file)
+	
+	start = time.Now()
+	t := trie.NewACDATrie(100000, 102400)
+	t.BuildTrie(arr)
+	end = time.Now()
+	fmt.Println("Build ACDATrie: ", end.Sub(start))
+	fmt.Println("Words in trie: ", t.Len())
+	
+	//check trie
+	
+	return t
+	
 }

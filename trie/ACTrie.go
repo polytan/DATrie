@@ -28,9 +28,6 @@ func (this *ACTrie) reset() {
 }
 
 func (_ *ACTrie) g(s *_T, a byte) *_T {
-	if s == nil {
-		fmt.Println("s is nil, a is ", a)
-	}
 	if c, ok := s.childrens[a]; ok {
 		return c
 	}
@@ -65,7 +62,7 @@ func (this *ACTrie) BuildTrie(arr []string) {
 	
 	//step 2. set initial output table
 	this.payload = make([]_AC, this.data.sequence + 1)
-	for i := 0; i <= this.data.sequence; i ++ {
+	for i := 0; i < len(this.payload); i ++ {
 		p := &this.payload[i]	//we need to pick reference, can not pick value
 		p.failure = this.data.root	//all node point to root
 		p.output = []string{}
@@ -98,8 +95,7 @@ func (this *ACTrie) BuildTrie(arr []string) {
 			v := this.f(r)
 			
 			for {
-				tmp := this.g(v, a)
-				if tmp != nil {
+				if tmp := this.g(v, a); tmp != nil {
 					break
 				}
 				
