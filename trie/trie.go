@@ -7,7 +7,6 @@ type _T struct {
 	chains		int		//how many chains after this node
 	terminal	bool	//whether this node is a word
 	word		byte	//the value
-	prefix		int16	//length from start to here
 	payload		interface{}		//the payload
 	childrens	map[byte]*_T	//children nodes
 }
@@ -23,7 +22,6 @@ func newT(seq int, w byte) *_T {
 		chains: 0,
 		terminal: false,
 		word: w,
-		prefix: 0,
 		payload: nil,
 		childrens: map[byte]*_T{},
 	}
@@ -40,7 +38,7 @@ type visitor func(*_T) bool
 type walker func(*_T) *_T
 
 func (t *_T) debug() {
-	fmt.Printf("node[%d], chains:%d, isword:%v, char:%d, prefix:%d childrens: %d\n", t.number, t.chains, t.terminal, t.word, t.prefix, len(t.childrens))
+	fmt.Printf("node[%d], chains:%d, isword:%v, char:%d, childrens: %d\n", t.number, t.chains, t.terminal, t.word, len(t.childrens))
 }
 
 func (t *_T) isLeaf() bool {
@@ -124,7 +122,6 @@ func (this *Trie) Add(str string) bool {
 		n, ok := curr.childrens[b]
 		if !ok {
 			n = newT(this.next(), b)
-			n.prefix = curr.prefix + 1
 			curr.childrens[b] = n
 		}
 		
