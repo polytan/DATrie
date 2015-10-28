@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+//	"runtime/pprof"
 	"github.com/polytan/DATrie/trie"
 )
 
@@ -19,26 +20,36 @@ func main() {
 //		panic("Error while createing trie")
 //	}
 	
-//	bc2 := loadDATrie(input)
-//	if bc2 == nil {
-//		panic("Error while creating DATrie")
+//	bc1.Search(search)
+	
+	bc2 := loadDATrie(input)
+	if bc2 == nil {
+		panic("Error while creating DATrie")
+	}
+	
+	bc2.Search(search)
+	
+//	bc3 := loadACTrie(input)
+//	if bc3 == nil {
+//		panic("Error while creating ACTrie")
 //	}
 	
-	bc3 := loadACTrie(input)
-	if bc3 == nil {
-		panic("Error while creating ACTrie")
-	}
+//	list3 := bc3.SearchTrie(search)
+//	fmt.Println(list3)
 	
-	list3 := bc3.SearchTrie(search)
-	fmt.Println(list3)
+//	bc4 := loadACDATrie(input)
+//	if bc4 == nil {
+//		panic("Error while creating ACDATrie")
+//	}
 	
-	bc4 := loadACDATrie(input)
-	if bc4 == nil {
-		panic("Error while creating ACDATrie")
-	}
+//	list4 := bc4.SearchTrie(search)
+//	fmt.Println(list4)
+
+//	runtime.GC()
 	
-	list4 := bc4.SearchTrie(search)
-	fmt.Println(list4)
+//	memFile, _ := os.Create("memory.log")
+//	pprof.WriteHeapProfile(memFile)
+	
 }
 
 func testSearch(t *trie.ACTrie, str string) {
@@ -165,7 +176,7 @@ func loadACDATrie(file string) *trie.ACDATrie {
 	
 	start = time.Now()
 	t := trie.NewACDATrie(100000, 102400)
-	t.BuildTrie(arr)
+	t.BuildFromArray(arr)
 	end = time.Now()
 	fmt.Println("Build ACDATrie: ", end.Sub(start))
 	fmt.Println("Words in trie: ", t.Len())

@@ -32,24 +32,27 @@ func NewTrie() *Trie {
 	}
 }
 
+func BuildTrie(arr []string) *Trie {
+	t := NewTrie()
+	
+	for _, str := range arr {
+		t.Add(str)
+	}
+	
+	return t
+}
+
 type visitor func(*_T) bool
 type walker func(*_T) *_T
 
 func (t *_T) debug() {
-	fmt.Printf("node[%d], chains:%d, isword:%v, childrens: %d\n", t.number, t.chains, t.terminal, len(t.childrens))
+	fmt.Printf("node[%d], chains:%d, isword:%v, childrens: %d\n",
+							t.number, t.chains, t.terminal, len(t.childrens))
 }
+func (t *_T) isLeaf() bool { return len(t.childrens) == 0 }
+func (t *_T) isWord() bool { return t.terminal }
+func (t *_T) words() int { return t.chains }
 
-func (t *_T) isLeaf() bool {
-	return len(t.childrens) == 0
-}
-
-func (t *_T) isWord() bool {
-	return t.terminal
-}
-
-func (t *_T) words() int {
-	return t.chains
-}
 
 func (this *Trie) next() int {
 	this.sequence ++

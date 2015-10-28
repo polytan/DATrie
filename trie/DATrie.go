@@ -118,23 +118,10 @@ func (this *DATrie) updateList() {
 	this.list = lines
 }
 
-func (this *DATrie) reOrg() {
-	fmt.Println("Reorg with ", len(this.list), " items")
-	if len(this.list) <= 0 {
-		return
-	}
-	
+func (this *DATrie) buildFromTrie(_trie *Trie) {
 	this.reset()
 	
-	//sort the list
-	sort.Strings(this.list)
-	
-	//build trie node
-	_trie := NewTrie()
-	for _, str := range this.list {
-		_trie.Add(str)
-	}
-	
+	//get non-leave nodes
 	refs := []*reference{}
 	_trie.WideVisit(func(n *_T) bool {
 		if n.isLeaf() {
@@ -160,8 +147,8 @@ func (this *DATrie) reOrg() {
 		
 		return true
 	})
-	
-	//sort the 
+
+	//sort the reference, we build DATrie using this order
 	sort.Sort(byReference(refs))
 	
 	//insert siblings into BCArray, update check first
@@ -170,22 +157,20 @@ func (this *DATrie) reOrg() {
 	}
 	
 	//now update base and check
-	
-	//set root node bc
+	//1. set B/C/N of root node
 	this.array.setBase(DATRIE_HEAD_LOC, _trie.root.payload.(*reference).base)
 	this.array.setCheck(DATRIE_HEAD_LOC, -DATRIE_HEAD_LOC)
-	this.array.setPayload(DATRIE_HEAD_LOC, _trie.root.number)
+	this.array.setValue(DATRIE_HEAD_LOC, _trie.root.number)
 	
-	//set other node bc
-	_trie.root.payload.(*reference).base = DATRIE_HEAD_LOC	//tell children about base location
+	//2. set B/C/N of other nodes
+	_trie.root.payload = DATRIE_HEAD_LOC
 	_trie.WideVisit(func(n *_T) bool {
-		if n.isLeaf() {
-			return true	//true means continue
+		if n.isLeaf() {	
+			return true	//continue
 		}
 		
-		ploc := n.payload.(*reference).base	//value is the parent location
-		basep := this.array.getBase(ploc)		//get base from that location
-		
+		ploc := n.payload.(int)		//the parent location in array
+		basep := this.array.getBase(ploc)		//the base of loc
 		for k, v := range n.childrens {
 			idx := basep + int(k)
 			
@@ -193,7 +178,6 @@ func (this *DATrie) reOrg() {
 				this.array.setBase(idx, 0)
 			} else {
 				this.array.setBase(idx, v.payload.(*reference).base)
-				v.payload.(*reference).base = idx	//set to parent loc, ref later
 			}
 			
 			if v.isWord() {
@@ -202,14 +186,33 @@ func (this *DATrie) reOrg() {
 				this.array.setCheck(idx, ploc)
 			}
 			
-			this.array.setPayload(idx, v.number)
+			v.payload = idx
+			this.array.setValue(idx, v.number)
 		}
 		
 		return true
 	})
 	
-	this.arrayItems = len(this.list)
+	this.arrayItems = _trie.Len()
 	this.states = _trie.sequence
+	return
+}
+
+func (this *DATrie) reOrg() {
+	fmt.Println("Reorg with ", len(this.list), " items")
+	if len(this.list) <= 0 {
+		return
+	}
+	
+	//sort the list
+	sort.Strings(this.list)
+	
+	//build trie node
+	_trie := BuildTrie(this.list)
+	
+	//build DATrie from trie tree
+	this.buildFromTrie(_trie)
+	
 	return
 }
 
@@ -252,17 +255,27 @@ func (this *DATrie) delArrayItem(str string) {
 	
 	if loc > 0 && this.array.getCheck(loc) < 0 {
 		this.arrayItems --
-		this.array.setCheck(loc, -this.array.getCheck(loc))
+		this.array.setCheck(loc, -this.array.getCheck(loc))	//we can add it back
 	}
 }
 
 func (this *DATrie) Add(str string) bool {
-	if this.Search(str) {	//already exist
+	if this.addTrie.Search(str) {		//already exist in trie
 		return true
 	}
-	this.list = append(this.list, str)
 	
+	if pre := this.prefix(str); pre > 0 {	//the path is already in array
+		if c := this.array.getCheck(pre); c > 0 {
+			this.arrayItems ++
+			this.array.setCheck(pre, -c)
+		}
+		
+		return true
+	}
+	
+	this.list = append(this.list, str)
 	this.addTrie.Add(str)
+	
 	if this.addTrie.Len() >= this.reorgSize {
 		this.updateList()
 		this.reOrg()
@@ -317,9 +330,7 @@ func (this *DATrie) SearchDebug(str string) bool {
 }
 
 
-func (this *DATrie) Build() {
-	this.reOrg()
-}
+func (this *DATrie) Build() { this.reOrg() }
 
 func (this *DATrie) BuildFromStrings(lines []string) {
 	this.list = lines

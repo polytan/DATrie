@@ -1,7 +1,7 @@
 package trie
 
 import (
-	"fmt"
+//	"fmt"
 	"sort"
 )
 
@@ -11,20 +11,20 @@ type _AC struct {
 }
 
 type ACTrie struct {
-	data	*Trie
-	payload	[]_AC
+	nodeStruct	*Trie
+	nodeValue	[]_AC
 }
 
 func NewACTrie() *ACTrie {
 	return &ACTrie{
-		data: NewTrie(),
-		payload: []_AC{},
+		nodeStruct: NewTrie(),
+		nodeValue: []_AC{},
 	}
 }
 
 func (this *ACTrie) reset() {
-	this.data = NewTrie()
-	this.payload = []_AC{}
+	this.nodeStruct = NewTrie()
+	this.nodeValue = []_AC{}
 }
 
 func (_ *ACTrie) g(s *_T, a byte) *_T {
@@ -36,56 +36,54 @@ func (_ *ACTrie) g(s *_T, a byte) *_T {
 }
 
 func (this *ACTrie) f(s *_T) *_T {
-	return this.payload[s.number].failure
+	return this.nodeValue[s.number].failure
 }
 
 func (this *ACTrie) out(s *_T) []string {
-	return this.payload[s.number].output
+	return this.nodeValue[s.number].output
 }
 
 func (this *ACTrie) sf(s *_T, t *_T) {
-	this.payload[s.number].failure = t
+	this.nodeValue[s.number].failure = t
 }
 
 
 func (this *ACTrie) BuildTrie(arr []string) {
+//	fmt.Println("===== START BUILD ACTRIE =====")
 	this.reset()
 	
 	sort.Strings(arr)
 	
-	//Phase 1: build trie
-	//step 1. construct trie
-	for _, str := range arr {
-		this.data.Add(str)
-	}
-	fmt.Println("Phase 1: step 1. finished!")
+//	fmt.Println("Phase 1: build trie")
+//	fmt.Println("step 1. construt trie")
+	this.nodeStruct = BuildTrie(arr)
 	
-	//step 2. set initial output table
-	this.payload = make([]_AC, this.data.sequence + 1)
-	for i := 0; i < len(this.payload); i ++ {
-		p := &this.payload[i]	//we need to pick reference, can not pick value
-		p.failure = this.data.root	//all node point to root
+//	fmt.Println("step 2. set initial output and failure table")
+	this.nodeValue = make([]_AC, this.nodeStruct.sequence + 1)
+	for i := 0; i < len(this.nodeValue); i ++ {
+		p := &this.nodeValue[i]				//pick reference instead of value
+		p.failure = this.nodeStruct.root	//all node point to root
 		p.output = []string{}
 	}
 
+//	fmt.Println("step 3. set output string set")
 	for _, str := range arr {
-		n := this.data.searchNode(str)
+		n := this.nodeStruct.searchNode(str)
 		
-		p := &this.payload[n.number]
+		p := &this.nodeValue[n.number]
 		p.output = append(p.output, str)
 	}
-	fmt.Println("Phase 1: step 2. finished!")
 	
-	//step 3. complete the goto function for root
-	//this step is not required, since our map restrict to only exist nodes
+//	fmt.Println("step 4. complete the goto function for root, not required")
 
-	//Phase 2: fill failure table
+//	fmt.Println("Phase 2: fill failure table")
+//	fmt.Println("step 1. queue push initial items")
 	Q := []*_T{}
-	for _, q := range this.data.root.childrens {
+	for _, q := range this.nodeStruct.root.childrens {
 		Q = append(Q, q)
 	}
-	fmt.Println("Phrase 2: started!")
 	
+//	fmt.Println("step 2. queue process to fill failure table")
 	for ; len(Q) > 0; {
 		r := Q[0]
 		Q = Q[1:]
@@ -99,37 +97,44 @@ func (this *ACTrie) BuildTrie(arr []string) {
 					break
 				}
 				
-				if v = this.f(v); v == this.data.root {
+				if v = this.f(v); v == this.nodeStruct.root {
 					break
 				}
 			}
 			
-			if va := this.g(v, a); va == nil && v == this.data.root {
-				this.sf(u, this.data.root)
+			if va := this.g(v, a); va == nil && v == this.nodeStruct.root {
+				this.sf(u, this.nodeStruct.root)
 			} else {
 				this.sf(u, va)
 			}
 			
-			p := &this.payload[u.number]
+			p := &this.nodeValue[u.number]
 			p.output = append(p.output, this.out(this.f(u))...)
 		}
 	}
-	fmt.Println("Phrase 2: finished!")
+//	fmt.Println("===== END BUILD ACTRIE =====")
 }
 
 func (this *ACTrie) SearchTrie(str string) []string {
 	out := []string{}
 
-	q := this.data.root
+	q := this.nodeStruct.root
 	for _, m := range []byte(str) {
 		for {
 			if this.g(q, m) != nil {
 				break
 			}
-			q = this.f(q)
+
+			if q = this.f(q); q == this.nodeStruct.root {
+				break
+			}
 		}
 		
 		q = this.g(q, m)
+		if q == nil {
+			q = this.nodeStruct.root
+			continue
+		}
 
 		if o := this.out(q); len(o) > 0 {
 //			fmt.Println("byte: ", m, ", out: ", o)
@@ -149,15 +154,15 @@ func (this *ACTrie) Del(str string) bool {
 }
 
 func (this *ACTrie) Len() int {
-	return this.data.Len()
+	return this.nodeStruct.Len()
 }
 
 func (this *ACTrie) Search(str string) bool {
-	return this.data.Search(str)
+	return this.nodeStruct.Search(str)
 }
 
 func (this *ACTrie) SearchDebug(str string) bool {
-	return this.data.SearchDebug(str)
+	return this.nodeStruct.SearchDebug(str)
 }
 
 func (this *ACTrie) Tokenize(str string) []string {

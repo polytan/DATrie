@@ -88,10 +88,10 @@ func (a *bcArray) take(i int) {
 }
 func (a *bcArray) setBase(i int, b int) { a.array[i].b = b }
 func (a *bcArray) setCheck(i int, c int) { a.array[i].c = c }
-func (a *bcArray) setPayload(i int, n int) { a.array[i].n = n }
+func (a *bcArray) setValue(i int, n int) { a.array[i].n = n }
 func (a *bcArray) getBase(i int) int { return a.array[i].b }
 func (a *bcArray) getCheck(i int) int { return a.array[i].c }
-func (a *bcArray) getPayload(i int) int { return a.array[i].n }
+func (a *bcArray) getValue(i int) int { return a.array[i].n }
 
 func (a *bcArray) nextPos(i int, l int) int {
 	next := -a.array[i].b
