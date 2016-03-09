@@ -1,55 +1,67 @@
 package main
 
 import (
-	"os"
-	"io"
 	"bufio"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"time"
-//	"runtime/pprof"
+	//	"runtime/pprof"
 	"github.com/polytan/DATrie/trie"
 )
 
 func main() {
 	input := "out.txt"
 	search := "中华人民共和国"
-//	search := "aabaacaadaaeaaf"
-//	bc1 := loadTrie(input)
-//	if bc1 == nil {
-//		panic("Error while createing trie")
-//	}
-	
-//	bc1.Search(search)
-	
-	bc2 := loadDATrie(input)
-	if bc2 == nil {
-		panic("Error while creating DATrie")
+	// search := "aabaacaadaaeaaf"
+	bc1 := loadTrie(input)
+	if bc1 == nil {
+		panic("Error while createing trie")
 	}
-	
-	bc2.Search(search)
-	
-//	bc3 := loadACTrie(input)
-//	if bc3 == nil {
-//		panic("Error while creating ACTrie")
-//	}
-	
-//	list3 := bc3.SearchTrie(search)
-//	fmt.Println(list3)
-	
-//	bc4 := loadACDATrie(input)
-//	if bc4 == nil {
-//		panic("Error while creating ACDATrie")
-//	}
-	
-//	list4 := bc4.SearchTrie(search)
-//	fmt.Println(list4)
 
-//	runtime.GC()
-	
-//	memFile, _ := os.Create("memory.log")
-//	pprof.WriteHeapProfile(memFile)
-	
+	bc1.Search(search)
+
+	// bc2 := loadDATrie(input)
+	// if bc2 == nil {
+	// 	panic("Error while creating DATrie")
+	// }
+
+	// bc2.Search(search)
+
+	//	bc3 := loadACTrie(input)
+	//	if bc3 == nil {
+	//		panic("Error while creating ACTrie")
+	//	}
+
+	//	list3 := bc3.SearchTrie(search)
+	//	fmt.Println(list3)
+
+	//	bc4 := loadACDATrie(input)
+	//	if bc4 == nil {
+	//		panic("Error while creating ACDATrie")
+	//	}
+
+	//	list4 := bc4.SearchTrie(search)
+	//	fmt.Println(list4)
+
+	mp1 := loadMap(input)
+	if mp1 == nil {
+		panic("Error while creating map")
+	}
+
+	if _, ok := mp1[search]; !ok {
+		panic("error search map")
+	}
+
+	fmt.Println("len: ", len(mp1))
+
+	//	runtime.GC()
+
+	//	memFile, _ := os.Create("memory.log")
+	//	pprof.WriteHeapProfile(memFile)
+
+	time.Sleep(time.Minute)
 }
 
 func testSearch(t *trie.ACTrie, str string) {
@@ -72,74 +84,102 @@ func readFile(file string) []string {
 		if err != nil && err != io.EOF {
 			return []string{}
 		}
-		
+
 		line = strings.Trim(line, "\r\n\t ")
 		if len(line) > 0 {
 			arr = append(arr, line)
 		}
-		
+
 		if err == io.EOF {
 			break
 		}
 	}
-	
+
 	end := time.Now()
 	fmt.Println("Load file: ", end.Sub(start))
-	
+
 	return arr
+}
+
+func loadMap(file string) map[string]int {
+	var start, end time.Time
+
+	arr := readFile(file)
+
+	start = time.Now()
+	m := map[string]int{}
+	for i, s := range arr {
+		m[s] = i
+	}
+	end = time.Now()
+	fmt.Println("Build map: ", end.Sub(start))
+	fmt.Println("Words in map: ", len(m))
+
+	start = time.Now()
+	for i := 0; i < 10; i++ {
+		for _, s := range arr {
+			if _, ok := m[s]; !ok {
+				panic("fatal error while testing: " + s)
+			}
+		}
+	}
+	end = time.Now()
+	fmt.Println("Validate map: ", end.Sub(start))
+
+	return m
 }
 
 func loadTrie(file string) *trie.Trie {
 	var start, end time.Time
-	
+
 	arr := readFile(file)
 
 	start = time.Now()
 	t := trie.NewTrie()
-	for _, str := range arr {
-		if t.Search(str) {
+	for i, str := range arr {
+		if t.Search(str) != nil {
 			fmt.Println("Already exist item in trie: ", str)
 		}
-		t.Add(str)
+		t.Add(str, i)
 	}
 	end = time.Now()
 	fmt.Println("Build trie: ", end.Sub(start))
 	fmt.Println("Words in trie: ", t.Len())
-	
+
 	//check trie
 	start = time.Now()
-	for i := 0; i < 10; i ++ {
+	for i := 0; i < 10; i++ {
 		for _, str := range arr {
-			if !t.Search(str) {
+			if t.Search(str) == nil {
 				panic("fatal error while testing: " + str)
 			}
 		}
 	}
 	end = time.Now()
 	fmt.Println("Validate trie: ", end.Sub(start))
-	
+
 	return t
 }
 
 func loadDATrie(file string) *trie.DATrie {
 	var start, end time.Time
-	
+
 	arr := readFile(file)
-	
+
 	start = time.Now()
 	//reorg when trie has so much nodes, expande bcarray to this size when no enough space
 	t := trie.NewDATrie(100000, 102400)
-//	for _, str := range arr {
-//		t.Add(str)
-//	}
-//	t.Build()
-	t.BuildFromStrings(arr)	//build one time
+	//	for _, str := range arr {
+	//		t.Add(str)
+	//	}
+	//	t.Build()
+	t.BuildFromStrings(arr) //build one time
 	end = time.Now()
 	fmt.Println("Build DATrie: ", end.Sub(start))
 	fmt.Println("Words in DATrie: ", t.Len())
-	
+
 	start = time.Now()
-	for i := 0; i < 10; i ++ {
+	for i := 0; i < 10; i++ {
 		for _, str := range arr {
 			if !t.Search(str) {
 				fmt.Println("fatal error while testing: " + str)
@@ -148,41 +188,41 @@ func loadDATrie(file string) *trie.DATrie {
 	}
 	end = time.Now()
 	fmt.Println("Validate trie: ", end.Sub(start))
-	
+
 	return t
 }
 
 func loadACTrie(file string) *trie.ACTrie {
 	var start, end time.Time
-	
+
 	arr := readFile(file)
-	
+
 	start = time.Now()
 	t := trie.NewACTrie()
 	t.BuildTrie(arr)
 	end = time.Now()
 	fmt.Println("Build ACTrie: ", end.Sub(start))
 	fmt.Println("Words in trie: ", t.Len())
-	
+
 	//check trie
-	
+
 	return t
 }
 
 func loadACDATrie(file string) *trie.ACDATrie {
 	var start, end time.Time
-	
+
 	arr := readFile(file)
-	
+
 	start = time.Now()
 	t := trie.NewACDATrie(100000, 102400)
 	t.BuildFromArray(arr)
 	end = time.Now()
 	fmt.Println("Build ACDATrie: ", end.Sub(start))
 	fmt.Println("Words in trie: ", t.Len())
-	
+
 	//check trie
-	
+
 	return t
-	
+
 }

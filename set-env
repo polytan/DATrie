@@ -1,0 +1,30 @@
+#!/bin/bash
+
+if [ "$BINROOT" == "" ]; then 
+    export BINROOT=/opt/dist
+fi
+echo "binary root directory: $BINROOT"
+
+target=$(echo "$1" | tr '[a-z]' '[A-Z]')
+target_root="$BINROOT/$1-$2"
+target_bin=$target_root/bin
+target_ver=$2
+if [ "$1" == "" ] || [ "$2" == "" ]; then
+    echo "don't know how to make your decision."
+elif [ ! -d $new ]; then
+    echo -e "echo \"no version $2 for target $1, directory $new does not exist.\"\nexit"
+else
+  eval target_curr_ver=\$${target}VER
+
+  export ${target}VER=$2
+  export ${target}ROOT=$target_root
+
+  if [ "$target_curr_ver" != "" ]; then
+      echo "change $1 version from [$target_curr_ver] to [$target_ver]"
+      export PATH=$(echo "$PATH" | sed "s|go-$target_curr_ver|go-$target_ver|g")
+  else
+      echo "set $1 version to [$target_ver]"
+      export PATH=$PATH:$target_bin
+  fi
+fi
+
